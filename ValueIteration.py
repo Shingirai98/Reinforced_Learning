@@ -5,8 +5,8 @@
 # |                                                                                 |
 # -----------------------------------------------------------------------------------
 import numpy as np
-import sys
 import argparse
+import random
 
 
 def main():
@@ -32,6 +32,11 @@ def main():
 
     w = args.width
     h = args.height
+    if args.k:
+        num = args.k
+
+    else:
+        k = 3
 
     if args.start:
         x1 = args.start[0]
@@ -46,14 +51,11 @@ def main():
         y2 = args.end[1]
     else:
         # TODO: Assign random numbers in the region {0;0 : w-1;h-1} except x1 & y1
+
         x2 = w - 1
         y2 = h - 1
 
-    if args.k:
-        num = args.k
 
-    else:
-        k = 3
 
     if args.gamma:
         g = args.gamma
@@ -61,6 +63,14 @@ def main():
     else:
         # TODO: Add a sensible learning rate of agent
         g = 0.15
+
+
+
+def value(s, gamma, S, T, R, V):
+    nextStateExpectedValue = 0
+    for nextState in getNextStates(s, S):
+        nextStateExpectedValue += T(nextState) * V(nextState)
+    return R(s) + gamma * nextStateExpectedValue
 
 
 if __name__ == '__main__':
