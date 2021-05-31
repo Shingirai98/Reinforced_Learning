@@ -7,7 +7,9 @@
 import numpy as np
 import argparse
 import random
+import matplotlib.pyplot as plt
 
+from Animate import generateAnimat
 
 def find_rand(endx, endy):
     x_val = random.randint(0, endx - 1)
@@ -53,7 +55,6 @@ def main():
     if args.start:
         x1 = int(args.start[0])
         y1 = int(args.start[1])
-        print(x1, "and", y1)
     else:
         # TODO: Assign random numbers in the region {0;0 : w-1;h-1}
         start_nums = find_rand(w, h)
@@ -99,7 +100,7 @@ def main():
         2: (0, 1),  # Down
         3: (0, -1),  # Up
     }
-
+    mines = []
     for i in range(num):
         ditch = find_rand(w, h)
         for x in initial_rec:
@@ -113,7 +114,7 @@ def main():
         xh = hole[0]
         yh = hole[1]
         records[0][yh][xh] = -100
-
+        mines.append((xh, yh))
         other_rec = np.zeros((1, h, w))
     i = 0
     while True:
@@ -156,7 +157,37 @@ def main():
 
     print(records)
 
+    optimum_policy = []
+    s = (x1, y1)
+    e = (x2, y2)
+    optimum_policy.append(s)
+    x = x1
+    y = y1
+    i = 0
+    while(True):
+        i +=1
+        valu = other_rec[0][y][x]
+        surrounding = []
+        for d in dxns:
+            if y+(dxns[d][1]) < 0 or y+(dxns[d][1]) == h or x+(dxns[d][0]) < 0 or x+(dxns[d][0]) == w :
+                surrounding.append(-200)
+                continue
+            nex = other_rec[0][y+(dxns[d])[1]][x+(dxns[d])[0]]
+            surrounding.append(nex)
 
+        maximum_index = surrounding.index(max(surrounding))
+        optimum_policy.append((x+dxns[maximum_index][0], y+dxns[maximum_index][1]))
+        x = x+dxns[maximum_index][0]
+        y = y+dxns[maximum_index][1]
+        if x == x2 and y == y2:
+            break
+
+    print(optimum_policy)
+
+    anim, fig, ax = generateAnimat(records, (x1, y1), (x2, y2), mines=mines, opt_pol=optimum_policy,
+                                   start_val=-10, end_val=100, mine_val=-100, just_vals=False, generate_gif=False,
+                                   vmin=-10, vmax=150)
+    plt.show()
 
 # def value(s, gamma, S, T, R, V):
 #     nextStateExpectedValue = 0
