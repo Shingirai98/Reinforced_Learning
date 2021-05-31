@@ -15,8 +15,8 @@ def find_rand(endx, endy):
     return x_val, y_val
 
 
-def value_fxn(rec, x, y, GAMMA, x1, y1):
-    v = rec[0][y][x] + (GAMMA * (rec[0][y1][x1]))
+def value_fxn(current, GAMMA, next_v):
+    v = (GAMMA * next_v)
     return v
 
 
@@ -80,17 +80,25 @@ def main():
         y2 = h - 1
 
     if args.gamma:
-        g = args.gamma
+        g = float(args.gamma[0])
 
     else:
         # TODO: Add a sensible learning rate of agent
         g = 0.85
 
     records = np.zeros((1, h, w))
-    records[0][y1][x1] = 50
+    records[0][y1][x1] = 0
     records[0][y2][x2] = 100
     ditches = []
     initial_rec = [(x1, y1), (x2, y2)]
+
+    dxns = {}
+    dxns = {
+        0: (-1, 0),  # Left
+        1: (1, 0),   # Right
+        2: (0, 1),  # Down
+        3: (0, -1),  # Up
+    }
 
     for i in range(num):
         ditch = find_rand(w, h)
@@ -106,23 +114,48 @@ def main():
         yh = hole[1]
         records[0][yh][xh] = -100
 
-    other_rec = np.zeros((1, h, w))
+        other_rec = np.zeros((1, h, w))
+    i = 0
+    while True:
+        for j in range(h):
+            for k in range(w):
+                # TODO: find the new value of the current coordinate
+                other_rec[0][j][k] = records[i][j][k]
+        # TODO: append to the records
 
-    directions = {}
-    for j in range(h):
-        for k in range(w):
-            # TODO: find the new value of the current coordinate
-            other_rec[0][j][k] = 45
-    # TODO: append to the records
-    # np.append(records, other_rec, axis = 2)
-    records = np.vstack((records, other_rec))
+        # update iteration record based on new values
+        for j in range(h):
+            for k in range(w):
+                if other_rec[0][j][k] == -100 or other_rec[0][j][k] == 100:
+                    continue
+                # old_V = other_rec[0][j][k]
+                new_V = 0
+                for d in dxns:
+                    try:
+                        if j+(dxns[d])[1] < 0 or k+(dxns[d])[0] <0 or j+(dxns[d])[1] == h or k+(dxns[d])[0] == w:
+                            continue
+                        next_v = records[i][j+(dxns[d])[1]][k+(dxns[d])[0]]
+
+                    except IndexError:
+                        continue
+
+                    v = value_fxn(records[i][j][k], g, next_v)
+
+                    if v > new_V:
+                        new_V = v
+
+                other_rec[0][j][k] = new_V
+
+        comparison = records[i] == other_rec[0]
+        equ = comparison.all()
+        if equ and i >0:
+            break
+        records = np.vstack((records, other_rec))
+
+        i+=1
 
     print(records)
 
-    all_states = []
-    for i in range(h):
-        for j in range(w):
-            all_states.append((i, j))
 
 
 # def value(s, gamma, S, T, R, V):
