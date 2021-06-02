@@ -10,7 +10,7 @@ import random
 import matplotlib.pyplot as plt
 
 from Animate import generateAnimat
-
+print("Reached one")
 def find_rand(endx, endy):
     x_val = random.randint(0, endx - 1)
     y_val = random.randint(0, endy - 1)
@@ -56,35 +56,35 @@ def main():
         x1 = int(args.start[0])
         y1 = int(args.start[1])
     else:
-        # TODO: Assign random numbers in the region {0;0 : w-1;h-1}
+
         start_nums = find_rand(w, h)
         x1 = start_nums[0]
         y1 = start_nums[1]
-
+    print("Reached two")
     if args.end:
 
         x2 = int(args.end[0])
         y2 = int(args.end[1])
     else:
-        # TODO: Assign random numbers in the region {0;0 : w-1;h-1} except x1 & y1
+
         end_nums = find_rand(w, h)
         while True:
             if end_nums == (x1, y1):
                 end_nums = find_rand(w, h)
                 continue
-            else:
-                break
+
+            break
 
         # x2 = random.randint(0, w-1)
         # y2 = random.randint(0, x-1)
-        x2 = w - 1
-        y2 = h - 1
-
+        x2 = end_nums[0]
+        y2 = end_nums[1]
+    print("Reached three")
     if args.gamma:
         g = float(args.gamma[0])
 
     else:
-        # TODO: Add a sensible learning rate of agent
+
         g = 0.85
 
     records = np.zeros((1, h, w))
@@ -101,13 +101,19 @@ def main():
         3: (0, -1),  # Up
     }
     mines = []
+    print("A")
+    #TODO: check the bug here
     for i in range(num):
-        ditch = find_rand(w, h)
-        for x in initial_rec:
-            if ditch == x:
+        ditch = find_rand(w, h) # returns a tuple (x, y)
+
+        while True:
+            if ditch in initial_rec:
                 ditch = find_rand(w, h)
-            else:
                 continue
+            else:
+                initial_rec.append(ditch)
+                break
+
         ditches.append(ditch)
 
     for hole in ditches:
@@ -115,14 +121,18 @@ def main():
         yh = hole[1]
         records[0][yh][xh] = -100
         mines.append((xh, yh))
-        other_rec = np.zeros((1, h, w))
+
     i = 0
+    #print(ditches)
+    #print(mines)
+
+    other_rec = np.zeros((1, h, w))
     while True:
         for j in range(h):
             for k in range(w):
-                # TODO: find the new value of the current coordinate
+
                 other_rec[0][j][k] = records[i][j][k]
-        # TODO: append to the records
+        
 
         # update iteration record based on new values
         for j in range(h):
@@ -135,6 +145,7 @@ def main():
                     try:
                         if j+(dxns[d])[1] < 0 or k+(dxns[d])[0] <0 or j+(dxns[d])[1] == h or k+(dxns[d])[0] == w:
                             continue
+
                         next_v = records[i][j+(dxns[d])[1]][k+(dxns[d])[0]]
 
                     except IndexError:
@@ -154,7 +165,7 @@ def main():
         records = np.vstack((records, other_rec))
 
         i+=1
-
+    print("Reached end")
     print(records)
 
     optimum_policy = []
@@ -179,6 +190,10 @@ def main():
         optimum_policy.append((x+dxns[maximum_index][0], y+dxns[maximum_index][1]))
         x = x+dxns[maximum_index][0]
         y = y+dxns[maximum_index][1]
+
+        # if it hits a landmine
+        if (x,y) in ditches:
+            break
         if x == x2 and y == y2:
             break
 
