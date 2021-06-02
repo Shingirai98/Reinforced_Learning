@@ -10,7 +10,7 @@ import random
 import matplotlib.pyplot as plt
 
 from Animate import generateAnimat
-print("Reached one")
+
 def find_rand(endx, endy):
     x_val = random.randint(0, endx - 1)
     y_val = random.randint(0, endy - 1)
@@ -39,8 +39,10 @@ def main():
     # number of landmines
     parser.add_argument("-k", help="starting position", nargs=1)
 
-    # learning rate
+    # discount factor
     parser.add_argument("-gamma", help="starting position", nargs=1)
+
+
     args = parser.parse_args()
 
     w = args.width
@@ -60,7 +62,7 @@ def main():
         start_nums = find_rand(w, h)
         x1 = start_nums[0]
         y1 = start_nums[1]
-    print("Reached two")
+
     if args.end:
 
         x2 = int(args.end[0])
@@ -79,7 +81,7 @@ def main():
         # y2 = random.randint(0, x-1)
         x2 = end_nums[0]
         y2 = end_nums[1]
-    print("Reached three")
+
     if args.gamma:
         g = float(args.gamma[0])
 
@@ -101,8 +103,8 @@ def main():
         3: (0, -1),  # Up
     }
     mines = []
-    print("A")
-    #TODO: check the bug here
+
+
     for i in range(num):
         ditch = find_rand(w, h) # returns a tuple (x, y)
 
@@ -165,8 +167,8 @@ def main():
         records = np.vstack((records, other_rec))
 
         i+=1
-    print("Reached end")
-    print(records)
+
+    print("The total records are: ", records)
 
     optimum_policy = []
     s = (x1, y1)
@@ -197,18 +199,13 @@ def main():
         if x == x2 and y == y2:
             break
 
-    print(optimum_policy)
+    print("Optimum policy:", optimum_policy)
 
     anim, fig, ax = generateAnimat(records, (x1, y1), (x2, y2), mines=mines, opt_pol=optimum_policy,
                                    start_val=-10, end_val=100, mine_val=-100, just_vals=False, generate_gif=False,
                                    vmin=-10, vmax=150)
     plt.show()
 
-# def value(s, gamma, S, T, R, V):
-#     nextStateExpectedValue = 0
-#     for nextState in getNextStates(s, S):
-#         nextStateExpectedValue += T(nextState) * V(nextState)
-#     return R(s) + gamma * nextStateExpectedValue
 
 
 if __name__ == '__main__':

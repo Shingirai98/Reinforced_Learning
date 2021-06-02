@@ -22,6 +22,11 @@ def value_fxn(current, GAMMA, next_v):
     v = (GAMMA * next_v)
     return v
 
+# function to return key for any value
+def get_key(val, my_dict):
+    for key, value in my_dict.items():
+         if val == value:
+             return key
 
 def main():
     parser = argparse.ArgumentParser()
@@ -40,8 +45,11 @@ def main():
     # number of landmines
     parser.add_argument("-k", help="starting position", nargs=1)
 
-    # learning rate
+    # discount factor
     parser.add_argument("-gamma", help="starting position", nargs=1)
+
+    # learning rate
+    parser.add_argument("-learning", help="starting position", nargs=1)
 
     # episodes
     parser.add_argument("-epochs", help="starting position", nargs=1)
@@ -91,18 +99,29 @@ def main():
     else:
         g = 0.85
 
+    if args.learning:
+        n = float(args.learning[0])
+
+    else:
+        n = 0.1
+
     if args.epochs:
         e = int(args.epochs[0])
 
     else:
         e = 10
 
+    # intialize the records 3D array
     records = np.zeros((1, h, w))
+
+    # set the environment with rewards
     records[0][y1][x1] = 0
     records[0][y2][x2] = 100
     ditches = []
+    # store the cells occupied
     initial_rec = [(x1, y1), (x2, y2)]
 
+    # store the possible actions per cell
     dxns = {}
     dxns = {
         0: (-1, 0),  # Left
@@ -110,9 +129,10 @@ def main():
         2: (0, 1),  # Down
         3: (0, -1),  # Up
     }
-    mines = []
-    print("A")
 
+    mines = []
+
+    # find the random coordinates for the landmines
     for i in range(num):
         ditch = find_rand(w, h)  # returns a tuple (x, y)
 
@@ -126,6 +146,7 @@ def main():
 
         ditches.append(ditch)
 
+    # assign the value of -100 for landmines
     for hole in ditches:
         xh = hole[0]
         yh = hole[1]
@@ -135,92 +156,93 @@ def main():
     i = 0
     all_states = w * h
     Q_table = np.zeros((all_states, 4))
-    print(Q_table)
 
-    
+
     states = {}
     i = 0
+
+    # store the states in a dictionary
     for y in range(h):
         for x in range(w):
             states[i] = (x, y)
             i += 1
-    print(states)
 
-    # print(ditches)
-    # print(mines)
 
-    # action_space_size = env.action_space.n
-    # state_space_size = env.observation_space.n
-    #
-    # q_table = np.zeros((state_space_size, action_space_size))
-    #
-    num_episodes = e
-    max_steps_per_episode = 100
-    #
-    learning_rate = 0.1
+
+
+
+    num_ep= e
+    max_moves = 100
+
+    learning_rate = n
     discount_rate = g
-    #
+    # initial exp rate
     exploration_rate = 1
     max_exploration_rate = 1
     min_exploration_rate = 0.01
     exploration_decay_rate = 0.01
-    #
-    # # Q-learning algorithm
-    for episode in range(num_episodes):
-        #     # initialize new episode params
-        #
-        for step in range(max_steps_per_episode):
-            # # Exploration-exploitation trade-off
-            # # Take new action
-            # # Update Q-table
-            # # Set new state
-            # # Add new reward
-            #
-            # # Exploration rate decay
-            # # Add current episode reward to total rewards list
-            # for episode in range(num_episodes):
-            #  state = env.reset()
-            done = False
-            rewards_current_episode = 0
-    #
-    #     for step in range(max_steps_per_episode):
-    #         # Exploration-exploitation trade-off
-    #         exploration_rate_threshold = random.uniform(0, 1)
-    #         if exploration_rate_threshold > exploration_rate:
-    #             action = np.argmax(q_table[state, :])
-    #         else:
-    #             action = env.action_space.sample()
-    #
-    #         new_state, reward, done, info = env.step(action)
-    #
-    #         # Update Q-table for Q(s,a)
-    #         q_table[state, action] = q_table[state, action] * (1 - learning_rate) + \
-    #                                  learning_rate * (reward + discount_rate * np.max(q_table[new_state, :]))
-    #
-    #         state = new_state
-    #         rewards_current_episode += reward
-    #
-    #         if done == True:
-    #             break
-    #
-    #         # Exploration rate decay
-    #         exploration_rate = min_exploration_rate + \
-    #                            (max_exploration_rate - min_exploration_rate) * np.exp(-exploration_decay_rate * episode)
-    #
-    #         rewards_all_episodes.append(rewards_current_episode)
-    #         # Calculate and print the average reward per thousand episodes
-    #         rewards_per_thousand_episodes = np.split(np.array(rewards_all_episodes), num_episodes / 1000)
-    #         count = 1000
-    #
-    #         print("********Average reward per thousand episodes********\n")
-    #         for r in rewards_per_thousand_episodes:
-    #             print(count, ": ", str(sum(r / 1000)))
-    #             count += 1000
-    #
-    #         # Print updated Q-table
-    #         print("\n\n********Q-table********\n")
-    #         print(q_table)
 
+    rewards = list()
+    other_rec = np.zeros((1, h, w))
+    # # Q-learning algorithm
+    i = 0
+    for episode in range(num_ep):
+        for j in range(h):
+            for k in range(w):
+
+                other_rec[0][j][k] = records[i][j][k]
+
+        current_state = get_key((x1, y1), states)
+        done = False
+
+        #     # initialize new episode params
+        total_rewards = 0
+        x_c = x1
+        y_c = y1
+        for step in range(max_moves):
+
+            # check if exploration is better that exploitation
+            if np.random.uniform(0, 1) < exploration_rate:
+                # take action from dxns
+
+                action = random.randint(0, 3)
+                # Check if action is out of grid scope
+                while True:
+
+                    if x_c+dxns[action][0] < 0 or x_c+dxns[action][0] == w or y_c + dxns[action][1] == h or y_c + dxns [action][0] < 0:
+                        action = random.randint(0, 3)
+                        continue
+                    else:
+                        break
+            else:
+                action = np.argmax(Q_table[current_state, :])
+            xt = x_c+dxns[action][0]
+            yt = y_c+dxns[action][1]
+            next_state = get_key((xt, yt), states)
+            rew = other_rec[0][yt][xt]
+            if rew == -100 or rew == 100:
+                done = True
+
+            Q_table[current_state, action] = (1 - learning_rate) * Q_table[current_state, action] + learning_rate * (rew + discount_rate * max(Q_table[next_state, :]))
+            #print(Q_table[current_state, action])
+            total_rewards = total_rewards + rew
+
+            if done:
+                break
+            current_state = next_state
+
+            exploration_rate = max(min_exploration_rate, np.exp(-exploration_decay_rate * e))
+            rewards.append(total_rewards)
+
+        i += 1
+        records = np.vstack((records, other_rec))
+
+    print(records)
+    print("Mean reward per thousand episodes")
+    print(Q_table)
+    for i in range(10):
+        print((i + 1) * 1000, ": mean episode reward: ", np.mean(rewards[1000 * i:1000 * (i + 1)]))
+    print("\n\n")
 
 if __name__ == '__main__':
     main()
